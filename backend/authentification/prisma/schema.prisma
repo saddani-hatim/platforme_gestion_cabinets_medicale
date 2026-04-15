@@ -1,0 +1,165 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id               Int           @id @default(autoincrement())
+  name             String
+  email            String        @unique
+  phone            String?       @unique
+  password         String
+  role             Role          @default(USER)
+  is_active        Boolean       @default(true)
+  created_at       DateTime      @default(now())
+  doctorProfile    Doctor?
+  receptionProfile Receptionist?
+  refreshToken     RefreshToken?
+
+  @@map("users")
+}
+
+model RefreshToken {
+  id         Int      @id @default(autoincrement())
+  token      String   @unique @db.VarChar(500)
+  userId     Int      @unique
+  expires_at DateTime
+  created_at DateTime @default(now())
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("refresh_tokens")
+}
+
+model PendingUser {
+  id                Int      @id @default(autoincrement())
+  email             String   @unique
+  name              String
+  password          String
+  role              Role     @default(USER)
+  verification_code String
+  expires_at        DateTime
+  created_at        DateTime @default(now())
+  phone             String?
+
+  @@map("pending_users")
+}
+
+model Doctor {
+  id            Int            @id @default(autoincrement())
+  specialty     String?
+  license_num   String?        @unique
+  userId        Int            @unique
+  appointments  Rendezvous[]
+  consultations Consultation[]
+  user          User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("doctors")
+}
+
+model Receptionist {
+  id                  Int          @id @default(autoincrement())
+  employee_id         String?      @unique
+  userId              Int          @unique
+  createdAppointments Rendezvous[] @relation("CreatedBy")
+  user                User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("receptionists")
+}
+
+model Patient {
+  id                 Int            @id @default(autoincrement())
+  first_name         String
+  last_name          String
+  cin                String         @unique
+  phone              String
+  email              String
+  date_of_birth      DateTime?
+  gender             String?
+  blood_group        String?
+  current_medication String?        @db.Text
+  allergies          String?        @db.Text
+  medical_history    String?        @db.Text
+  created_at         DateTime       @default(now())
+  appointments       Rendezvous[]
+  consultations      Consultation[]
+
+  @@map("patients")
+}
+
+model Rendezvous {
+  id               Int               @id @default(autoincrement())
+  patient_id       Int
+  doctor_id        Int
+  created_by_id    Int?
+  appointment_date DateTime
+  start_time       String
+  end_time         String
+  status           AppointmentStatus @default(SCHEDULED)
+  notes            String?           @db.Text
+  createdBy        Receptionist?     @relation("CreatedBy", fields: [created_by_id], references: [id])
+  doctor           Doctor            @relation(fields: [doctor_id], references: [id])
+  patient          Patient           @relation(fields: [patient_id], references: [id], onDelete: Cascade)
+
+  @@index([appointment_date])
+  @@index([doctor_id, appointment_date])
+  @@index([created_by_id], map: "appointments_created_by_id_fkey")
+  @@index([patient_id], map: "appointments_patient_id_fkey")
+  @@map("appointments")
+}
+
+model Consultation {
+  id             Int      @id @default(autoincrement())
+  patient_id     Int
+  doctor_id      Int
+  date           DateTime @default(now())
+  symptoms       String?  @db.Text
+  diagnosis      String?  @db.Text
+  prescription   String?  @db.Text
+  observations   String?  @db.Text
+  weight         Float?
+  blood_pressure String?
+  doctor         Doctor   @relation(fields: [doctor_id], references: [id])
+  patient        Patient  @relation(fields: [patient_id], references: [id])
+
+  @@index([doctor_id], map: "consultations_doctor_id_fkey")
+  @@index([patient_id], map: "consultations_patient_id_fkey")
+  @@map("consultations")
+}
+
+model StockItem {
+  id                 Int           @id @default(autoincrement())
+  name               String
+  category           StockCategory
+  quantity           Int           @default(0)
+  min_quantity_alert Int           @default(5)
+  price              Float?
+  expiry_date        DateTime?
+  updated_at         DateTime      @updatedAt
+  created_at         DateTime      @default(now())
+
+  @@map("stock_items")
+}
+
+enum Role {
+  USER
+  DOCTOR
+  RECEPTIONIST
+  ADMIN
+}
+
+enum AppointmentStatus {
+  SCHEDULED
+  COMPLETED
+  CANCELLED
+}
+
+enum StockCategory {
+  MEDICINE
+  EQUIPMENT
+  OTHER
+}

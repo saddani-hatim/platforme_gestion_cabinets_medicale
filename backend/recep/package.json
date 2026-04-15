@@ -1,0 +1,27 @@
+{
+    "name": "recep",
+    "version": "1.0.0",
+    "description": "",
+    "type": "module",
+    "main": "src/index.js",
+    "scripts": {
+        "start": "node src/index.js",
+        "dev": "nodemon src/index.js"
+    },
+    "keywords": [],
+    "author": "",
+    "license": "ISC",
+    "dependencies": {
+        "@apollo/server": "^4.10.0",
+        "@apollo/subgraph": "^2.13.1",
+        "@prisma/client": "^5.10.0",
+        "cors": "^2.8.5",
+        "dotenv": "^16.4.5",
+        "graphql": "^16.8.1",
+        "graphql-tag": "^2.12.6"
+    },
+    "devDependencies": {
+        "nodemon": "^3.1.0",
+        "prisma": "^5.10.0"
+    }
+}

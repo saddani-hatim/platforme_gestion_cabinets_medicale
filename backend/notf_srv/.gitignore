@@ -1,0 +1,24 @@
+# ─── Dependencies ──────────────────────────────
+node_modules/
+
+# ─── Environment ───────────────────────────────
+
+
+# ─── WhatsApp Web.js session cache ─────────────
+.wwebjs_auth/
+.wwebjs_cache/
+
+# ─── Build ──────────────────────────────────────
+dist/
+build/
+
+# ─── Logs ──────────────────────────────────────
+*.log
+logs/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# ─── OS ─────────────────────────────────────────
+.DS_Store
+Thumbs.db

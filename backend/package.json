@@ -1,0 +1,23 @@
+{
+  "name": "platforme-cabinet-backend",
+  "version": "1.0.0",
+  "description": "Root package to run all microservices for the medical cabinet platform.",
+  "scripts": {
+    "install:all": "npm install --prefix authentification && npm install --prefix doctor && npm install --prefix recep && npm install --prefix notf_srv && npm install --prefix gateway",
+    "dev": "concurrently --kill-others-on-fail \"npm run dev:auth\" \"npm run dev:doctor\" \"npm run dev:recep\" \"npm run dev:notif\" \"npm run dev:gateway\"",
+    "start": "concurrently --kill-others-on-fail \"npm run start:auth\" \"npm run start:doctor\" \"npm run start:recep\" \"npm run start:notif\" \"npm run start:gateway\"",
+    "dev:auth": "cd authentification && npm run dev",
+    "dev:doctor": "cd doctor && npm run dev",
+    "dev:recep": "cd recep && npm run dev",
+    "dev:notif": "cd notf_srv && npm run dev",
+    "dev:gateway": "cd gateway && npm run dev",
+    "start:auth": "cd authentification && npm start",
+    "start:doctor": "cd doctor && npm start",
+    "start:recep": "cd recep && npm start",
+    "start:notif": "cd notf_srv && npm start",
+    "start:gateway": "cd gateway && npm start"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  }
+}

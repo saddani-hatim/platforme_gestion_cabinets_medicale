@@ -1,0 +1,21 @@
+syntax = "proto3";
+
+package notification;
+
+service NotificationService {
+  rpc SendNotification (NotificationRequest) returns (NotificationResponse);
+}
+
+message NotificationRequest {
+  string type = 1;      // "email" or "whatsapp"
+  string to = 2;        // email address or phone number
+  string message = 3;   // text message
+  string subject = 4;   // email subject (optional)
+  string html = 5;      // email html content (optional)
+}
+
+message NotificationResponse {
+  bool success = 1;
+  string error = 2;
+  string messageId = 3; // For email
+}

@@ -1,0 +1,186 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+// --- ENUMS ---
+
+enum Role {
+  USER
+  DOCTOR
+  RECEPTIONIST
+  ADMIN
+}
+
+enum AppointmentStatus {
+  SCHEDULED
+  COMPLETED
+  CANCELLED
+}
+
+enum StockCategory {
+  MEDICINE
+  EQUIPMENT
+  OTHER
+}
+
+// --- AUTHENTICATION & USERS ---
+
+model User {
+  id                     Int       @id @default(autoincrement())
+  name                   String
+  email                  String    @unique
+  phone                  String?   @unique
+  password               String    // Toujours hashé
+  role                   Role      @default(USER)
+  is_active              Boolean   @default(true)
+  created_at             DateTime  @default(now())
+  // Relations 1-à-1 vers les profils métiers
+  doctorProfile     Doctor?
+  receptionProfile  Receptionist?
+
+  // RELATION AJOUTÉE : 1-à-1 avec RefreshToken
+  refreshToken      RefreshToken?
+
+  @@map("users")
+}
+
+model RefreshToken {
+  id          Int      @id @default(autoincrement())
+  token       String   @unique @db.VarChar(500)
+  
+  // Correction ici : Ajout de @unique pour imposer le 1-à-1
+  userId      Int      @unique 
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expires_at  DateTime
+  created_at  DateTime @default(now())
+
+  @@index([userId])
+  @@map("refresh_tokens")
+}
+
+model PendingUser {
+  id                Int      @id @default(autoincrement())
+  email             String   @unique
+  phone             String?  @unique
+  name              String
+  password          String
+  role              Role     @default(USER)
+  verification_code String
+  expires_at        DateTime
+  created_at        DateTime @default(now())
+
+  @@map("pending_users")
+}
+
+// --- METIERS (Profils) ---
+
+model Doctor {
+  id           Int      @id @default(autoincrement())
+  specialty    String?
+  license_num  String?  @unique
+
+  userId       Int      @unique
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  appointments  Rendezvous[]
+  consultations Consultation[]
+
+  @@map("doctors")
+}
+
+model Receptionist {
+  id          Int      @id @default(autoincrement())
+  employee_id String?  @unique
+
+  userId      Int      @unique
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAppointments Rendezvous[] @relation("CreatedBy")
+
+  @@map("receptionists")
+}
+
+// --- PATIENT & DOSSIER ---
+
+model Patient {
+  id                 Int       @id @default(autoincrement())
+  first_name         String
+  last_name          String
+  cin                String  @unique
+  phone              String
+  email              String
+  date_of_birth      DateTime?
+  gender             String?
+  blood_group        String?
+  current_medication String?   @db.Text
+  allergies          String?   @db.Text
+  medical_history    String?   @db.Text
+  created_at         DateTime  @default(now())
+
+  appointments       Rendezvous[]
+  consultations      Consultation[]
+
+  @@map("patients")
+}
+
+// --- FLUX MEDICAL ---
+
+model Rendezvous {
+  id               Int               @id @default(autoincrement())
+  patient_id       Int
+  doctor_id        Int
+  created_by_id    Int? 
+  
+  appointment_date DateTime
+  start_time       String 
+  end_time         String 
+  status           AppointmentStatus @default(SCHEDULED)
+  notes            String?           @db.Text
+
+  patient          Patient           @relation(fields: [patient_id], references: [id], onDelete: Cascade)
+  doctor           Doctor            @relation(fields: [doctor_id], references: [id])
+  createdBy        Receptionist?     @relation("CreatedBy", fields: [created_by_id], references: [id])
+
+  @@index([appointment_date])
+  @@index([doctor_id, appointment_date])
+  @@map("appointments")
+}
+
+model Consultation {
+  id             Int      @id @default(autoincrement())
+  patient_id     Int
+  doctor_id      Int
+  date           DateTime @default(now())
+  symptoms       String?  @db.Text
+  diagnosis      String?  @db.Text
+  prescription   String?  @db.Text
+  observations   String?  @db.Text
+  weight         Float?
+  blood_pressure String?
+
+  patient        Patient  @relation(fields: [patient_id], references: [id])
+  doctor         Doctor   @relation(fields: [doctor_id], references: [id])
+
+  @@map("consultations")
+}
+
+// --- GESTION & LOGISTIQUE ---
+
+model StockItem {
+  id                 Int           @id @default(autoincrement())
+  name               String
+  category           StockCategory
+  quantity           Int           @default(0)
+  min_quantity_alert Int           @default(5)
+  price              Float?
+  expiry_date        DateTime?
+  updated_at         DateTime      @updatedAt
+  created_at         DateTime      @default(now())
+
+  @@map("stock_items")
+}
